@@ -5,7 +5,7 @@ format: markdown_github
 
 The *assignment mechanism* is key to any causal analysis. There are three assumptions: (1) the assignment is *individualistic*, that is an individual's assignment probability cannot depend on the values of covariates or potential outcomes of other individuals, (2) the assignment is *unconfounded*, the assignment mechanism cannot depend on the potential outcomes, and *probabilistic*, there is a non-zero probability for each treatment value for every individual. [@imbens2015causal] This paper focuses on the final assumption, sometimes referred to as *positivity*. Formally, we denote the continuous exposure as $T$, which takes on values in a set $\mathscr{T}$. For individual $i$ and each value of the exposure, $t$, there is a potential outcome $Y_i(t)$. [@imbens2000role] Each individual also has a vector of pre-exposure covariates, $X_i$. In the most general case, the assignment mechanism is defined as $P(T=t|\mathbf{X}, \mathbf{Y}(t))$ (with the unconfounded assumption this reduced to $P(T=t|\mathbf{X})$. An assignment mechanism is *probabilisitic* if the probability of assignment to each exposure level is strictly between 0 and 1:
 
-$$0 < P_i(X}, Y(t)) < 1, \textrm{ for each possible } X, Y(t)$$ 
+$$0 < P_i(X, Y(t)) < 1, \textrm{ for each possible } X, Y(t)$$ 
 
 for all $i=1, \dots, N$
 In other words, the probabilistic (positivity) assumption states that for all individuals within strata of $X$ there exists a non-zero probability of receiving every exposure level. 
