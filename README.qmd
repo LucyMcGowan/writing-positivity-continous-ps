@@ -142,33 +142,36 @@ bias_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 ```{r}
 #| label: fig-sims
 #| fig-height: 10
-#| fig-caption: "Weird"
+#| fig-cap: "Boo. Look at all that bias and variance"
 
-ggplot(bias, aes(n, bias, color = fit)) +
-  geom_point(alpha = 0.5) +
-  geom_line(data = bias %>% 
-              group_by(n, fit) %>% 
-              summarise(bias = mean(bias), .groups = "drop")) +
+ggplot(bias, aes(n, bias, color = fit, group = fit)) +
+  geom_point(alpha = 0.1) +
+  # geom_line(data = bias %>% 
+  #             group_by(n, fit) %>% 
+  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
+  geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p1
 
-ggplot(bias_ex, aes(n, bias, color = fit)) +
-  geom_point() +
-  geom_line(data = bias_ex %>% 
-              group_by(n, fit) %>% 
-              summarise(bias = mean(bias), .groups = "drop")) +
+ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(color = "white") + 
+  # geom_line(data = bias_ex %>% 
+  #             group_by(n, fit) %>% 
+  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p2
 
-ggplot(bias_ou, aes(n, bias, color = fit)) +
-  geom_point() +
-  geom_line(data = bias_ou %>% 
-              group_by(n, fit) %>% 
-              summarise(bias = mean(bias), .groups = "drop")) +
+ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(color = "white") +
+  # geom_line(data = bias_ou %>% 
+  #             group_by(n, fit) %>% 
+  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
