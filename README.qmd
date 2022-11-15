@@ -66,6 +66,12 @@ s <- function(n, a = 1, b = 1) {
     bias = c(coef(lm(y ~ x))[2],
              coef(lm(y ~ x, weights = weight))[2],
              coef(lm(y ~ x + c))[2]),
+    coverage = c(1*(confint(lm(y ~ x))[2, 1] < 0 &
+                      confint(lm(y ~ x))[2, 2] > 0),
+                 1*(confint(lm(y ~ x, weights = weight))[2, 1] < 0 &
+                      confint(lm(y ~ x, weights = weight))[2, 2] > 0),
+                 1*(confint(lm(y ~ x + c))[2, 1] < 0 &
+                      confint(lm(y ~ x + c))[2, 2] > 0)),
     fit = c("unadjusted", "propensity score weighted", "covariate adjustment")
   )
 }
@@ -122,18 +128,18 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
 #| label: specs
 n <- c(100, 500,
        seq(1000, 10000, by = 1000),
-       seq(10000, 1000000, by = 10000))
+       seq(10000, 100000, by = 10000))
 B <- 100
 ```
 
 ```{r}
 #| label: run-sims
-#| cache: true
+#| cache: false
 
 set.seed(1)
-bias <- map_df(1:B, ~map_df(n, s))
-bias_ex <- map_df(1:B, ~map_df(n, s, a = 10))
-bias_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
+results <- map_df(1:B, ~map_df(n, s))
+results_ex <- map_df(1:B, ~map_df(n, s, a = 10))
+results_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 ```
 
 @fig-sims demonstrates that in the case of a continuous exposure, when there is near violation of the positivity assumption, as seen in panels B and C, the causal estimate using the stabilized generalized propensity score is both biased and has large variance, which does not appreciably decrease despite the large sample size.
@@ -144,7 +150,7 @@ bias_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 #| fig-height: 10
 #| fig-cap: "Boo. Look at all that bias and variance"
 
-ggplot(bias, aes(n, bias, color = fit, group = fit)) +
+ggplot(results, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   # geom_line(data = bias %>% 
   #             group_by(n, fit) %>% 
@@ -155,7 +161,7 @@ ggplot(bias, aes(n, bias, color = fit, group = fit)) +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p1
 
-ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
+ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") + 
   # geom_line(data = bias_ex %>% 
@@ -166,7 +172,7 @@ ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p2
 
-ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
+ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") +
   # geom_line(data = bias_ou %>% 
@@ -180,5 +186,64 @@ ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
 library(patchwork)
 
 p1 / p2 / p3 + plot_annotation(tag_levels = "A")
+```
+
+@fig-sims2 shows similar results for a coverage metric, with some undercoverage even observable in Panel A.
+
+```{r}
+#| label: fig-sims2
+#| fig-height: 10
+#| fig-cap: "The coverage ain't coveraging"
+
+results2 <- results %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+results_ex2 <- results_ex %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+results_ou2 <- results_ou %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+  
+ggplot(results2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p4
+
+ggplot(results_ex2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p5
+
+ggplot(results_ou2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p6
+
+p4 / p5 / p6 + plot_annotation(tag_levels = "A")
 ```
 
