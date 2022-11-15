@@ -1,6 +1,7 @@
 ---
 title: "The bad news about non-structural lack of positivity for continuous exposures"
-format: markdown_github
+format: gfm
+bibliography: citations.bib
 ---
 
 The *assignment mechanism* is key to any causal analysis. There are three assumptions: (1) the assignment is *individualistic*, that is an individual's assignment probability cannot depend on the values of covariates or potential outcomes of other individuals, (2) the assignment is *unconfounded*, the assignment mechanism cannot depend on the potential outcomes, and *probabilistic*, there is a non-zero probability for each treatment value for every individual. [@imbens2015causal] This paper focuses on the final assumption, sometimes referred to as *positivity*. Formally, we denote the continuous exposure as $T$, which takes on values in a set $\mathscr{T}$. For individual $i$ and each value of the exposure, $t$, there is a potential outcome $Y_i(t)$. [@imbens2000role] Each individual also has a vector of pre-exposure covariates, $X_i$. In the most general case, the assignment mechanism is defined as $P(T=t|\mathbf{X}, \mathbf{Y}(t))$ (with the unconfounded assumption this reduced to $P(T=t|\mathbf{X})$. An assignment mechanism is *probabilisitic* if the probability of assignment to each exposure level is strictly between 0 and 1:
@@ -33,14 +34,19 @@ We examine 3 scenarios:
 2. A single binary confounder with a large effect on the exposure and moderate effect on the outcome
 3. A single binary confounder with a large effect on the exposure and large effect on the outcome.
 
-We generate a binary confounder, $X$, from a Bernoulli distribution with probability 0.1. The continuous exposure, $T$ is generated as follows:
+We generate a binary confounder, $X$, from a Bernoulli distribution with probability 0.5. The continuous exposure, $T$ is generated as follows:
 
-$$T = aX + \varepsilon_{t|x}$$
+$$
+T = aX + \varepsilon_{t|x}
+$$ {#eq-t}
 Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such that the "true" effect of $T$ is 0:
 
-$$Y = bX + \varepsilon_{y|x}$$
+$$
+Y = bX + \varepsilon_{y|x}
+$$ {#eq-y}
 
 where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and $b=1,10$ for moderate and large effects, respectively. We vary the sample size from 100 to 1,000,000, examining 100 replicates of each.
+
 
 
 
@@ -50,8 +56,8 @@ where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and $b=1,10$ for mo
 #| warning: false
 library(tidyverse)
 
-s <- function(n, a = 1, b = 1) {
-  c <- rbinom(n, 1, 0.1)
+s <- function(n, a = 1, b = 1, p = 0.5) {
+  c <- rbinom(n, 1, p)
   x <- a * c + rnorm(n)
   y <- b * c + rnorm(n)
   
@@ -84,7 +90,7 @@ n <- 10000
 set.seed(1)
 
 df <- tibble(
-  x = rbinom(n, 1, 0.1),
+  x = rbinom(n, 1, 0.5),
   t = a * x + rnorm(n),
   y = b * x + rnorm(n)
 )
@@ -105,13 +111,36 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
 a <- 10
 set.seed(1)
 df <- tibble(
-  x = rbinom(n, 1, 0.1),
+  x = rbinom(n, 1, 0.5),
   t = a * x + rnorm(n),
   y = b * x + rnorm(n)
 )
 
 ggplot(df, aes(x = t, group = x, fill = factor(x))) + 
   geom_mirror_histogram(bins = 30) + 
+  labs(fill = "X") + 
+  scale_y_continuous(label = abs) +
+  scale_fill_manual(values = c("cornflower blue", "orange")) + 
+  theme_classic()
+```
+
+```{r}
+den <- lm(t ~ x, data = df)
+df <- df %>%
+  mutate(weight = dnorm(t, mean(t), sd(t)) / 
+           dnorm(t, fitted(den), sigma(den)))
+ggplot(df, aes(x = t, group = x, fill = factor(x))) + 
+  geom_mirror_histogram(bins = 30, alpha = 0.5) + 
+    geom_mirror_histogram(bins = 30, aes(weight = weight), alpha = 0.5) + 
+
+  labs(fill = "X") + 
+  scale_y_continuous(label = abs) +
+  scale_fill_manual(values = c("cornflower blue", "orange")) + 
+  theme_classic()
+
+ggplot(df, aes(x = t, group = x, fill = factor(x))) + 
+  geom_histogram(bins = 30, fill = "grey") + 
+    geom_histogram(bins = 30, aes(weight = weight), alpha = 0.5) + 
   labs(fill = "X") + 
   scale_y_continuous(label = abs) +
   scale_fill_manual(values = c("cornflower blue", "orange")) + 
@@ -126,10 +155,10 @@ n <- c(100, 500,
 B <- 100
 ```
 
+
 ```{r}
 #| label: run-sims
 #| cache: true
-
 set.seed(1)
 bias <- map_df(1:B, ~map_df(n, s))
 bias_ex <- map_df(1:B, ~map_df(n, s, a = 10))
@@ -142,13 +171,12 @@ bias_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 ```{r}
 #| label: fig-sims
 #| fig-height: 10
+#| message: false
+#| warning: false
 #| fig-cap: "Boo. Look at all that bias and variance"
 
 ggplot(bias, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
-  # geom_line(data = bias %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
@@ -158,9 +186,6 @@ ggplot(bias, aes(n, bias, color = fit, group = fit)) +
 ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") + 
-  # geom_line(data = bias_ex %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
@@ -169,9 +194,6 @@ ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
 ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") +
-  # geom_line(data = bias_ou %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
@@ -180,5 +202,51 @@ ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
 library(patchwork)
 
 p1 / p2 / p3 + plot_annotation(tag_levels = "A")
+```
+
+The magnitude of the variability depends on the magnitude of the effect of $X$ and $T$ (in @eq-t as $a$), and, for a binary confounder, the magnitude of the bias depends on the prevalence of the confounder ($p$) as well as the magnitude of the effect of $T$ and $Y$ (in @eq-y as $b$). Below is a heatmap exploring the relationship between these three quantities when $n = 10,000$
+
+```{r}
+#| label: heatmap-sim
+#| cache: true
+params <- expand_grid(n = 10000, 
+                      p = seq(0.1, 0.5, by = 0.1), 
+                      a = seq(2, 10, by = 2), 
+                      b = seq(2, 10, by = 2))
+
+set.seed(1)
+B <- 1000
+bias_p <- map(1:B, ~ pmap(params, s))
+```
+
+
+```{r}
+#| label: fig-heatmap-bias
+#| fig-cap: "Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect."
+
+d <- do.call(rbind, unlist(bias_p, recursive = FALSE)) %>%
+  filter(fit == "propensity score weighted") %>%
+  mutate(p = rep(params$p, B),
+         a = rep(params$a, B),
+         b = rep(params$b, B))
+
+d %>%
+ group_by(a, b, p) %>%
+ summarise(bias = mean(bias), .groups = "drop") %>%
+ggplot(aes(x = a, y = b, fill = bias)) + 
+  geom_tile() + 
+  facet_grid(~p)
+```
+
+
+```{r}
+#| label: fig-heatmap-sd
+#| fig-cap: "Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect."
+d %>%
+ group_by(a, b, p) %>%
+ summarise(sd = sd(bias), .groups = "drop") %>%
+ggplot(aes(x = a, y = b, fill = sd)) + 
+  geom_tile() + 
+  facet_grid(~p)
 ```
 
