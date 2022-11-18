@@ -1,12 +1,10 @@
----
-title: The bad news about non-structural lack of positivity for
-  continuous exposures
-toc-title: Table of contents
----
+The bad news about non-structural lack of positivity for continuous
+exposures
+================
 
 The *assignment mechanism* is key to any causal analysis. There are
 three assumptions: (1) the assignment is *individualistic*, that is an
-individual's assignment probability cannot depend on the values of
+individual’s assignment probability cannot depend on the values of
 covariates or potential outcomes of other individuals, (2) the
 assignment is *unconfounded*, the assignment mechanism cannot depend on
 the potential outcomes, and *probabilistic*, there is a non-zero
@@ -40,11 +38,13 @@ pre-exposure covariates. We then use the fitted values and the model
 variance in a Gaussian probability density function. (Austin 2019)
 
 $$e(t, x) = f_{T|X}(t|x) = \frac{1}{\sqrt{2\pi\hat\sigma^2}}\exp\left\{-\frac{(t-X\hat\beta)^2}{2\pi\hat\sigma^2}\right\}$$
+
 The following stabilized weight is then used, where the numerator is the
 marginal density of the exposure.
 
 $$w = \frac{f_T(t)}{f_{T|X}(t|x)} = \frac{\hat{\sigma}_{t|x}}{\hat\sigma_t}\exp\left\{\frac{(t-X\hat\beta)^2}{2\hat\sigma_{t|x}^2}-\frac{(t-\mu_t)^2}{2\hat\sigma_t^2}\right\}$$
-\## Positivity
+
+## Positivity
 
 Violations (or near violations) of the probabilistic assumption can
 increase both the bias and variance of causal effect estimates.
@@ -54,7 +54,6 @@ that there is a structural mechanism that makes certain levels of the
 exposure impossible for a subset of individuals. The latter are random
 violations that can occur in finite samples due to chance. This paper
 will focus on random violations of positivity, demonstrating that
-
 “finite” does not mean small, but rather in the case of continuous
 exposures can be any sample size that is not infinite.
 
@@ -72,14 +71,12 @@ We examine 3 scenarios:
 We generate a binary confounder, $X$, from a Bernoulli distribution with
 probability 0.5. The continuous exposure, $T$ is generated as follows:
 
-
 <span id="eq-t">$$
 T = aX + \varepsilon_{t|x}
  \qquad(1)$$</span>
 
 Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such that the “true” effect
 of $T$ is 0:
-
 
 <span id="eq-y">$$
 Y = bX + \varepsilon_{y|x}
@@ -89,10 +86,12 @@ where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and
 $b=1,10$ for moderate and large effects, respectively. We vary the
 sample size from 100 to 1,000,000, examining 100 replicates of each.
 
-::: cell
-``` {.r .cell-code}
+``` r
 library(tidyverse)
 
+f <- function(x, denominator_model) {
+  sum(dnorm(x, fitted(denominator_model), sigma(denominator_model)))
+}
 s <- function(n, a = 1, b = 1, p = 0.5) {
   c <- rbinom(n, 1, p)
   x <- a * c + rnorm(n)
@@ -102,24 +101,33 @@ s <- function(n, a = 1, b = 1, p = 0.5) {
     x ~ c
   )
   
-  weight <- dnorm(x, mean(x), sd(x)) /
-    dnorm(x, fitted(denominator_model), sigma(denominator_model))
+  ps <- dnorm(x, fitted(denominator_model), sigma(denominator_model))
+  
+  weight <- dnorm(x, mean(x), sd(x)) / ps
+  
+  #overlap <- map_dbl(x, f, denominator_model)^(-1) / ps
+  
+  unadjusted <- lm(y ~ x)
+  ate_w <- lm(y ~ x, weights = weight)
+  # ato_w <- lm(y ~ x, weights = overlap_w)
+  gform <- lm(y ~ x + c)
   tibble(
     n = c(n, n, n),
-    bias = c(coef(lm(y ~ x))[2],
-             coef(lm(y ~ x, weights = weight))[2],
-             coef(lm(y ~ x + c))[2]),
-    coverage = c(1*(confint(lm(y ~ x))[2, 1] < 0 &
-                      confint(lm(y ~ x))[2, 2] > 0),
-                 1*(confint(lm(y ~ x, weights = weight))[2, 1] < 0 &
-                      confint(lm(y ~ x, weights = weight))[2, 2] > 0),
-                 1*(confint(lm(y ~ x + c))[2, 1] < 0 &
-                      confint(lm(y ~ x + c))[2, 2] > 0)),
-    fit = c("unadjusted", "propensity score weighted", "covariate adjustment")
+    bias = c(coef(unadjusted)[2],
+             coef(ate_w)[2],
+             #           coef(ato_w)[2],
+             coef(gform)[2]),
+    variance = c(summary(unadjusted)$coefficients[2,2],
+                 summary(ate_w)$coefficients[2,2],
+                 #               summary(ato_w)$coefficients[2,2],
+                 summary(gform)$coefficients[2,2]),
+    fit = c("unadjusted", 
+            "propensity score weighted (ATE)", 
+            # "propensity score weighted (Overlap)", 
+            "covariate adjustment")
   )
 }
 ```
-:::
 
 When $a = 1$, the positivity assumption is not violated, for example
 [Figure 1](#fig-a1) shows a mirrored histogram for a simulation as
@@ -131,8 +139,7 @@ however in practice it happens very infrequently. See
 [Figure 2](#fig-a2), a mirrored histogram for a simulation where $a=10$
 and a sample size of 10,000.
 
-::: cell
-``` {.r .cell-code}
+``` r
 a <- 1
 b <- 1
 n <- 10000
@@ -153,16 +160,16 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
   theme_classic()
 ```
 
-::: cell-output-display
-![Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n =
-10,000](README_files/figure-markdown/fig-a1-1.png){#fig-a1}
-:::
-:::
+<figure>
+<img src="README_files/figure-gfm/fig-a1-1.png" id="fig-a1"
+alt="Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n = 10,000" />
+<figcaption aria-hidden="true">Figure 1: Mirrored Histogram showing
+overlap. a = 1, b = 1, n = 10,000</figcaption>
+</figure>
 
-::: cell
-``` {.r .cell-code}
+``` r
 a <- 10
-set.seed(1)
+set.seed(2)
 df <- tibble(
   x = rbinom(n, 1, 0.5),
   t = a * x + rnorm(n),
@@ -177,60 +184,114 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
   theme_classic()
 ```
 
-::: cell-output-display
-![Figure 2: Mirrored histogram with positivity
-near-violation](README_files/figure-markdown/fig-a2-1.png){#fig-a2}
-:::
-:::
+<figure>
+<img src="README_files/figure-gfm/fig-a2-1.png" id="fig-a2"
+alt="Figure 2: Mirrored histogram with positivity near-violation" />
+<figcaption aria-hidden="true">Figure 2: Mirrored histogram with
+positivity near-violation</figcaption>
+</figure>
 
-::: cell
-``` {.r .cell-code}
+``` r
+den <- lm(t ~ x, data = df)
+df <- df %>%
+  mutate(
+    ps = dnorm(t, fitted(den), sigma(den)),
+    weight = dnorm(t, mean(t), sd(t)) / ps)
+
+ggplot(df, aes(x = t, group = x, fill = factor(x))) + 
+  geom_histogram(bins = 30, fill = "grey") + 
+  geom_histogram(bins = 30, aes(weight = weight), alpha = 0.5) + 
+  labs(fill = "X") + 
+  scale_y_continuous(label = abs) +
+  scale_fill_manual(values = c("cornflower blue", "orange")) + 
+  theme_classic()
+```
+
+<figure>
+<img src="README_files/figure-gfm/fig-weight-1.png" id="fig-weight"
+alt="Figure 3: oh no. Weighted pseudopopulation using GPS (ATE) weights" />
+<figcaption aria-hidden="true">Figure 3: oh no. Weighted
+pseudopopulation using GPS (ATE) weights</figcaption>
+</figure>
+
+``` r
+set.seed(1)
+h <- map_df(1:1000, ~ s(10000, a = 10))
+```
+
+The estimates for the effect of the treatment are biased. The
+distribution for the effect is non-normal ([Figure 4](#fig-skew)).
+
+``` r
+h %>%
+  filter(fit == "propensity score weighted (ATE)") -> h_wt
+ggplot(h_wt, aes(x = bias,)) +
+  geom_histogram(binwidth = 0.005, aes(y = ..density..)) + 
+  geom_density() +
+  stat_function(fun = dnorm,
+                args = list(mean = mean(h_wt$bias),
+                            sd = sd(h_wt$bias)),
+                lty = 2, color = "orange") + 
+  labs(x = "Coefficient")
+```
+
+    Warning: The dot-dot notation (`..density..`) was deprecated in ggplot2 3.4.0.
+    ℹ Please use `after_stat(density)` instead.
+
+<figure>
+<img src="README_files/figure-gfm/fig-skew-1.png" id="fig-skew"
+alt="Figure 4: Skewed distribution of the estimated coefficient for the treatment. For reference a normal density is overlaid in orange." />
+<figcaption aria-hidden="true">Figure 4: Skewed distribution of the
+estimated coefficient for the treatment. For reference a normal density
+is overlaid in orange.</figcaption>
+</figure>
+
+``` r
 n <- c(100, 500,
        seq(1000, 10000, by = 1000),
        seq(10000, 100000, by = 10000))
 B <- 100
 ```
-:::
 
-::: cell
-``` {.r .cell-code}
+``` r
 set.seed(1)
 results <- map_df(1:B, ~map_df(n, s))
 results_ex <- map_df(1:B, ~map_df(n, s, a = 10))
 results_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 ```
-:::
 
-[Figure 3](#fig-sims) demonstrates that in the case of a continuous
+[Figure 5](#fig-sims) demonstrates that in the case of a continuous
 exposure, when there is near violation of the positivity assumption, as
 seen in panels B and C, the causal estimate using the stabilized
 generalized propensity score is both biased and has large variance,
 which does not appreciably decrease despite the large sample size.
 
-::: cell
-``` {.r .cell-code}
+``` r
 ggplot(results, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
-  geom_smooth(color = "white") + 
+  geom_smooth() + 
+  # geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  scale_color_manual(values = c("orange", "cornflower blue", "pink" )) + 
   theme(legend.position = "none") -> p1
 
 ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
-  geom_smooth(color = "white") + 
+  geom_smooth() + 
+  # geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  scale_color_manual(values = c("orange", "cornflower blue", "pink" )) + 
   theme(legend.position = "none") -> p2
 
 ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
-  geom_smooth(color = "white") +
+  geom_smooth() +
+  # geom_smooth(color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  scale_color_manual(values = c("orange", "cornflower blue", "pink" )) + 
   theme(legend.position = "bottom") -> p3
 
 library(patchwork)
@@ -238,13 +299,68 @@ library(patchwork)
 p1 / p2 / p3 + plot_annotation(tag_levels = "A")
 ```
 
-
 <figure>
 <img src="README_files/figure-gfm/fig-sims-1.png" id="fig-sims"
-alt="Figure 3: Boo. Look at all that bias and variance" />
-<figcaption aria-hidden="true">Figure 3: Boo. Look at all that bias and
+alt="Figure 5: Boo. Look at all that bias and variance" />
+<figcaption aria-hidden="true">Figure 5: Boo. Look at all that bias and
 variance</figcaption>
 </figure>
+
+**?@fig-sims2** shows similar results for a coverage metric, with some
+undercoverage even observable in Panel A.
+
+``` r
+results2 <- results %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+results_ex2 <- results_ex %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+results_ou2 <- results_ou %>%
+  group_by(n, fit) %>%
+  summarise(mean_coverage = mean(coverage),
+            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+
+
+ggplot(results2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p4
+
+ggplot(results_ex2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p5
+
+ggplot(results_ou2, aes(n, mean_coverage, color = fit, group = fit)) +
+  geom_point(position = position_dodge(1000)) +
+  geom_line(position = position_dodge(1000)) +
+  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
+                    ymax = mean_coverage + 1.96*mcse), width = .1,
+                position = position_dodge(1000)) +
+  geom_hline(yintercept = 0.95, lty = 2) +
+  theme_classic() +
+  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
+  theme(legend.position = "none") -> p6
+
+p4 / p5 / p6 + plot_annotation(tag_levels = "A")
+```
 
 The magnitude of the variability depends on the magnitude of the effect
 of $X$ and $T$ (in [Equation 1](#eq-t) as $a$), and, for a binary
@@ -272,9 +388,9 @@ d <- do.call(rbind, unlist(bias_p, recursive = FALSE)) %>%
          b = rep(params$b, B))
 
 d %>%
- group_by(a, b, p) %>%
- summarise(bias = mean(bias), .groups = "drop") %>%
-ggplot(aes(x = a, y = b, fill = bias)) + 
+  group_by(a, b, p) %>%
+  summarise(bias = mean(bias), .groups = "drop") %>%
+  ggplot(aes(x = a, y = b, fill = bias)) + 
   geom_tile() + 
   facet_grid(~p)
 ```
@@ -282,8 +398,8 @@ ggplot(aes(x = a, y = b, fill = bias)) +
 <figure>
 <img src="README_files/figure-gfm/fig-heatmap-bias-1.png"
 id="fig-heatmap-bias"
-alt="Figure 4: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect." />
-<figcaption aria-hidden="true">Figure 4: Impact of the prevalence of X,
+alt="Figure 6: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 6: Impact of the prevalence of X,
 magnitude of the effect between X and T, and magnitude of the effect
 between X and Y on the bias of the observed exposure
 effect.</figcaption>
@@ -291,9 +407,9 @@ effect.</figcaption>
 
 ``` r
 d %>%
- group_by(a, b, p) %>%
- summarise(sd = sd(bias), .groups = "drop") %>%
-ggplot(aes(x = a, y = b, fill = sd)) + 
+  group_by(a, b, p) %>%
+  summarise(sd = sd(bias), .groups = "drop") %>%
+  ggplot(aes(x = a, y = b, fill = sd)) + 
   geom_tile() + 
   facet_grid(~p)
 ```
@@ -301,8 +417,8 @@ ggplot(aes(x = a, y = b, fill = sd)) +
 <figure>
 <img src="README_files/figure-gfm/fig-heatmap-sd-1.png"
 id="fig-heatmap-sd"
-alt="Figure 5: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect." />
-<figcaption aria-hidden="true">Figure 5: Impact of the prevalence of X,
+alt="Figure 7: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 7: Impact of the prevalence of X,
 magnitude of the effect between X and T, and magnitude of the effect
 between X and Y on the variability in the observed exposure
 effect.</figcaption>
@@ -343,4 +459,3 @@ Positivity Assumption.” *Statistical Methods in Medical Research* 21
 </div>
 
 </div>
-
