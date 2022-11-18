@@ -1,10 +1,12 @@
-The bad news about non-structural lack of positivity for continuous
-exposures
-================
+---
+title: The bad news about non-structural lack of positivity for
+  continuous exposures
+toc-title: Table of contents
+---
 
 The *assignment mechanism* is key to any causal analysis. There are
 three assumptions: (1) the assignment is *individualistic*, that is an
-individual’s assignment probability cannot depend on the values of
+individual's assignment probability cannot depend on the values of
 covariates or potential outcomes of other individuals, (2) the
 assignment is *unconfounded*, the assignment mechanism cannot depend on
 the potential outcomes, and *probabilistic*, there is a non-zero
@@ -38,13 +40,11 @@ pre-exposure covariates. We then use the fitted values and the model
 variance in a Gaussian probability density function. (Austin 2019)
 
 $$e(t, x) = f_{T|X}(t|x) = \frac{1}{\sqrt{2\pi\hat\sigma^2}}\exp\left\{-\frac{(t-X\hat\beta)^2}{2\pi\hat\sigma^2}\right\}$$
-
 The following stabilized weight is then used, where the numerator is the
 marginal density of the exposure.
 
 $$w = \frac{f_T(t)}{f_{T|X}(t|x)} = \frac{\hat{\sigma}_{t|x}}{\hat\sigma_t}\exp\left\{\frac{(t-X\hat\beta)^2}{2\hat\sigma_{t|x}^2}-\frac{(t-\mu_t)^2}{2\hat\sigma_t^2}\right\}$$
-
-## Positivity
+\## Positivity
 
 Violations (or near violations) of the probabilistic assumption can
 increase both the bias and variance of causal effect estimates.
@@ -54,6 +54,7 @@ that there is a structural mechanism that makes certain levels of the
 exposure impossible for a subset of individuals. The latter are random
 violations that can occur in finite samples due to chance. This paper
 will focus on random violations of positivity, demonstrating that
+
 “finite” does not mean small, but rather in the case of continuous
 exposures can be any sample size that is not infinite.
 
@@ -71,12 +72,14 @@ We examine 3 scenarios:
 We generate a binary confounder, $X$, from a Bernoulli distribution with
 probability 0.5. The continuous exposure, $T$ is generated as follows:
 
+
 <span id="eq-t">$$
 T = aX + \varepsilon_{t|x}
  \qquad(1)$$</span>
 
 Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such that the “true” effect
 of $T$ is 0:
+
 
 <span id="eq-y">$$
 Y = bX + \varepsilon_{y|x}
@@ -86,7 +89,8 @@ where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and
 $b=1,10$ for moderate and large effects, respectively. We vary the
 sample size from 100 to 1,000,000, examining 100 replicates of each.
 
-``` r
+::: cell
+``` {.r .cell-code}
 library(tidyverse)
 
 s <- function(n, a = 1, b = 1, p = 0.5) {
@@ -105,10 +109,17 @@ s <- function(n, a = 1, b = 1, p = 0.5) {
     bias = c(coef(lm(y ~ x))[2],
              coef(lm(y ~ x, weights = weight))[2],
              coef(lm(y ~ x + c))[2]),
+    coverage = c(1*(confint(lm(y ~ x))[2, 1] < 0 &
+                      confint(lm(y ~ x))[2, 2] > 0),
+                 1*(confint(lm(y ~ x, weights = weight))[2, 1] < 0 &
+                      confint(lm(y ~ x, weights = weight))[2, 2] > 0),
+                 1*(confint(lm(y ~ x + c))[2, 1] < 0 &
+                      confint(lm(y ~ x + c))[2, 2] > 0)),
     fit = c("unadjusted", "propensity score weighted", "covariate adjustment")
   )
 }
 ```
+:::
 
 When $a = 1$, the positivity assumption is not violated, for example
 [Figure 1](#fig-a1) shows a mirrored histogram for a simulation as
@@ -120,7 +131,8 @@ however in practice it happens very infrequently. See
 [Figure 2](#fig-a2), a mirrored histogram for a simulation where $a=10$
 and a sample size of 10,000.
 
-``` r
+::: cell
+``` {.r .cell-code}
 a <- 1
 b <- 1
 n <- 10000
@@ -141,14 +153,14 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
   theme_classic()
 ```
 
-<figure>
-<img src="README_files/figure-gfm/fig-a1-1.png" id="fig-a1"
-alt="Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n = 10,000" />
-<figcaption aria-hidden="true">Figure 1: Mirrored Histogram showing
-overlap. a = 1, b = 1, n = 10,000</figcaption>
-</figure>
+::: cell-output-display
+![Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n =
+10,000](README_files/figure-markdown/fig-a1-1.png){#fig-a1}
+:::
+:::
 
-``` r
+::: cell
+``` {.r .cell-code}
 a <- 10
 set.seed(1)
 df <- tibble(
@@ -165,26 +177,29 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
   theme_classic()
 ```
 
-<figure>
-<img src="README_files/figure-gfm/fig-a2-1.png" id="fig-a2"
-alt="Figure 2: Mirrored histogram with positivity near-violation" />
-<figcaption aria-hidden="true">Figure 2: Mirrored histogram with
-positivity near-violation</figcaption>
-</figure>
+::: cell-output-display
+![Figure 2: Mirrored histogram with positivity
+near-violation](README_files/figure-markdown/fig-a2-1.png){#fig-a2}
+:::
+:::
 
-``` r
+::: cell
+``` {.r .cell-code}
 n <- c(100, 500,
        seq(1000, 10000, by = 1000),
-       seq(10000, 1000000, by = 10000))
+       seq(10000, 100000, by = 10000))
 B <- 100
 ```
+:::
 
-``` r
+::: cell
+``` {.r .cell-code}
 set.seed(1)
-bias <- map_df(1:B, ~map_df(n, s))
-bias_ex <- map_df(1:B, ~map_df(n, s, a = 10))
-bias_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
+results <- map_df(1:B, ~map_df(n, s))
+results_ex <- map_df(1:B, ~map_df(n, s, a = 10))
+results_ou <- map_df(1:B, ~map_df(n, s, a = 10, b = 10))
 ```
+:::
 
 [Figure 3](#fig-sims) demonstrates that in the case of a continuous
 exposure, when there is near violation of the positivity assumption, as
@@ -192,8 +207,9 @@ seen in panels B and C, the causal estimate using the stabilized
 generalized propensity score is both biased and has large variance,
 which does not appreciably decrease despite the large sample size.
 
-``` r
-ggplot(bias, aes(n, bias, color = fit, group = fit)) +
+::: cell
+``` {.r .cell-code}
+ggplot(results, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
@@ -201,7 +217,7 @@ ggplot(bias, aes(n, bias, color = fit, group = fit)) +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p1
 
-ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
+ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
@@ -209,7 +225,7 @@ ggplot(bias_ex, aes(n, bias, color = fit, group = fit)) +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
   theme(legend.position = "none") -> p2
 
-ggplot(bias_ou, aes(n, bias, color = fit, group = fit)) +
+ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
@@ -221,6 +237,7 @@ library(patchwork)
 
 p1 / p2 / p3 + plot_annotation(tag_levels = "A")
 ```
+
 
 <figure>
 <img src="README_files/figure-gfm/fig-sims-1.png" id="fig-sims"
@@ -326,3 +343,4 @@ Positivity Assumption.” *Statistical Methods in Medical Research* 21
 </div>
 
 </div>
+
