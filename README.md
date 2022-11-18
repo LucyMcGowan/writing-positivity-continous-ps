@@ -362,18 +362,17 @@ ggplot(results_ou2, aes(n, mean_coverage, color = fit, group = fit)) +
 p4 / p5 / p6 + plot_annotation(tag_levels = "A")
 ```
 
-The magnitude of the variability depends on the magnitude of the effect
-of $X$ and $T$ (in [Equation 1](#eq-t) as $a$), and, for a binary
-confounder, the magnitude of the bias depends on the prevalence of the
-confounder ($p$) as well as the magnitude of the effect of $T$ and $Y$
-(in [Equation 2](#eq-y) as $b$). Below is a heatmap exploring the
-relationship between these three quantities when $n = 10,000$
+The magnitude of the bias and variability depend on the magnitude of the
+effect of $X$ and $T$ (in [Equation 1](#eq-t) as $a$), and, for a binary
+confounder the prevalence of the confounder ($p$). Below is a heatmap
+exploring the relationship between these two quantities when
+$n = 10,000$
 
 ``` r
 params <- expand_grid(n = 10000, 
-                      p = seq(0.1, 0.5, by = 0.1), 
                       a = seq(2, 10, by = 2), 
-                      b = seq(2, 10, by = 2))
+                      b = 1,
+                      p = seq(0.1, 0.5, by = 0.1))
 
 set.seed(1)
 B <- 1000
@@ -382,17 +381,15 @@ bias_p <- map(1:B, ~ pmap(params, s))
 
 ``` r
 d <- do.call(rbind, unlist(bias_p, recursive = FALSE)) %>%
-  filter(fit == "propensity score weighted") %>%
+  filter(fit == "propensity score weighted (ATE)") %>%
   mutate(p = rep(params$p, B),
          a = rep(params$a, B),
          b = rep(params$b, B))
 
 d %>%
-  group_by(a, b, p) %>%
-  summarise(bias = mean(bias), .groups = "drop") %>%
-  ggplot(aes(x = a, y = b, fill = bias)) + 
-  geom_tile() + 
-  facet_grid(~p)
+  ggplot(aes(x = p, y = bias, color = a, group = a)) + 
+  geom_jitter(height = 0, alpha = 0.5) +
+  geom_smooth()
 ```
 
 <figure>
@@ -409,9 +406,9 @@ effect.</figcaption>
 d %>%
   group_by(a, b, p) %>%
   summarise(sd = sd(bias), .groups = "drop") %>%
-  ggplot(aes(x = a, y = b, fill = sd)) + 
-  geom_tile() + 
-  facet_grid(~p)
+  ggplot(aes(x = p, y = sd, color = a, group = a)) +
+  geom_point() +
+  geom_line()
 ```
 
 <figure>
