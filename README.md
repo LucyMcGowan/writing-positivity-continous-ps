@@ -10,18 +10,17 @@ individual's assignment probability cannot depend on the values of
 covariates or potential outcomes of other individuals, (2) the
 assignment is *unconfounded*, the assignment mechanism cannot depend on
 the potential outcomes, and *probabilistic*, there is a non-zero
-probability for each treatment value for every individual.
-[@imbens2015causal] This paper focuses on the final assumption,
-sometimes referred to as *positivity*. Formally, we denote the
-continuous exposure as $T$, which takes on values in a set
-$\mathscr{T}$. For individual $i$ and each value of the exposure, $t$,
-there is a potential outcome $Y_i(t)$. [@imbens2000role] Each individual
-also has a vector of pre-exposure covariates, $X_i$. In the most general
-case, the assignment mechanism is defined as
-$P(T=t|\mathbf{X}, \mathbf{Y}(t))$ (with the unconfounded assumption
-this reduced to $P(T=t|\mathbf{X})$. An assignment mechanism is
-*probabilisitic* if the probability of assignment to each exposure level
-is strictly between 0 and 1:
+probability for each treatment value for every individual. (Imbens and
+Rubin 2015) This paper focuses on the final assumption, sometimes
+referred to as *positivity*. Formally, we denote the continuous exposure
+as $T$, which takes on values in a set $\mathscr{T}$. For individual $i$
+and each value of the exposure, $t$, there is a potential outcome
+$Y_i(t)$. (Imbens 2000) Each individual also has a vector of
+pre-exposure covariates, $X_i$. In the most general case, the assignment
+mechanism is defined as $P(T=t|\mathbf{X}, \mathbf{Y}(t))$ (with the
+unconfounded assumption this reduced to $P(T=t|\mathbf{X})$. An
+assignment mechanism is *probabilisitic* if the probability of
+assignment to each exposure level is strictly between 0 and 1:
 
 $$0 < P_i(X, Y(t)) < 1, \textrm{ for each possible } X, Y(t)$$
 
@@ -33,11 +32,12 @@ exists a non-zero probability of receiving every exposure level.
 
 A generalized propensity score is defined as:
 
-$$e(t, x) = P(T = t | X = x)$$ Often, for continuous exposures this is
-estimated by first fitting a linear regression model prediction the
-exposure from a set of pre-exposure covariates. We then use the fitted
-values and the model variance in a Gaussian probability density
-function. [@austin2019assessing]
+$$e(t, x) = P(T = t | X = x)$$
+
+Often, for continuous exposures this is estimated by first fitting a
+linear regression model prediction the exposure from a set of
+pre-exposure covariates. We then use the fitted values and the model
+variance in a Gaussian probability density function. (Austin 2019)
 
 $$e(t, x) = f_{T|X}(t|x) = \frac{1}{\sqrt{2\pi\hat\sigma^2}}\exp\left\{-\frac{(t-X\hat\beta)^2}{2\pi\hat\sigma^2}\right\}$$
 The following stabilized weight is then used, where the numerator is the
@@ -48,13 +48,14 @@ $$w = \frac{f_T(t)}{f_{T|X}(t|x)} = \frac{\hat{\sigma}_{t|x}}{\hat\sigma_t}\exp\
 
 Violations (or near violations) of the probabilistic assumption can
 increase both the bias and variance of causal effect estimates.
-[@petersen2012diagnosing]. There are two ways this violation can arise:
+(Petersen et al. 2012). There are two ways this violation can arise:
 structural non-positivity and random non-positivity. The former suggests
 that there is a structural mechanism that makes certain levels of the
 exposure impossible for a subset of individuals. The latter are random
 violations that can occur in finite samples due to chance. This paper
 will focus on random violations of positivity, demonstrating that
-"finite" does not mean small, but rather in the case of continuous
+
+“finite” does not mean small, but rather in the case of continuous
 exposures can be any sample size that is not infinite.
 
 ## Simulations
@@ -69,12 +70,20 @@ We examine 3 scenarios:
     large effect on the outcome.
 
 We generate a binary confounder, $X$, from a Bernoulli distribution with
-probability 0.1. The continuous exposure, $T$ is generated as follows:
+probability 0.5. The continuous exposure, $T$ is generated as follows:
 
-$$T = aX + \varepsilon_{t|x}$$ Where $\varepsilon_{t|x}\sim N(0,1)$ and
-$Y$ such that the "true" effect of $T$ is 0:
 
-$$Y = bX + \varepsilon_{y|x}$$
+<span id="eq-t">$$
+T = aX + \varepsilon_{t|x}
+ \qquad(1)$$</span>
+
+Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such that the “true” effect
+of $T$ is 0:
+
+
+<span id="eq-y">$$
+Y = bX + \varepsilon_{y|x}
+ \qquad(2)$$</span>
 
 where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and
 $b=1,10$ for moderate and large effects, respectively. We vary the
@@ -84,8 +93,8 @@ sample size from 100 to 1,000,000, examining 100 replicates of each.
 ``` {.r .cell-code}
 library(tidyverse)
 
-s <- function(n, a = 1, b = 1) {
-  c <- rbinom(n, 1, 0.1)
+s <- function(n, a = 1, b = 1, p = 0.5) {
+  c <- rbinom(n, 1, p)
   x <- a * c + rnorm(n)
   y <- b * c + rnorm(n)
   
@@ -130,7 +139,7 @@ n <- 10000
 set.seed(1)
 
 df <- tibble(
-  x = rbinom(n, 1, 0.1),
+  x = rbinom(n, 1, 0.5),
   t = a * x + rnorm(n),
   y = b * x + rnorm(n)
 )
@@ -155,7 +164,7 @@ ggplot(df, aes(x = t, group = x, fill = factor(x))) +
 a <- 10
 set.seed(1)
 df <- tibble(
-  x = rbinom(n, 1, 0.1),
+  x = rbinom(n, 1, 0.5),
   t = a * x + rnorm(n),
   y = b * x + rnorm(n)
 )
@@ -202,9 +211,6 @@ which does not appreciably decrease despite the large sample size.
 ``` {.r .cell-code}
 ggplot(results, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
-  # geom_line(data = bias %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_smooth(color = "white") + 
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
@@ -214,9 +220,6 @@ ggplot(results, aes(n, bias, color = fit, group = fit)) +
 ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") + 
-  # geom_line(data = bias_ex %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
@@ -225,9 +228,6 @@ ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
 ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
   geom_point(alpha = 0.1) +
   geom_smooth(color = "white") +
-  # geom_line(data = bias_ou %>% 
-  #             group_by(n, fit) %>% 
-  #             summarise(bias = mean(bias), .groups = "drop"), color = "white") +
   geom_hline(yintercept = 0, lty = 2) +
   theme_classic() +
   scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
@@ -238,122 +238,109 @@ library(patchwork)
 p1 / p2 / p3 + plot_annotation(tag_levels = "A")
 ```
 
-::: {.cell-output .cell-output-stderr}
-    `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
-    `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
-    `geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'
-:::
 
-``` {.r .cell-code}
-print(head(results))
+<figure>
+<img src="README_files/figure-gfm/fig-sims-1.png" id="fig-sims"
+alt="Figure 3: Boo. Look at all that bias and variance" />
+<figcaption aria-hidden="true">Figure 3: Boo. Look at all that bias and
+variance</figcaption>
+</figure>
+
+The magnitude of the variability depends on the magnitude of the effect
+of $X$ and $T$ (in [Equation 1](#eq-t) as $a$), and, for a binary
+confounder, the magnitude of the bias depends on the prevalence of the
+confounder ($p$) as well as the magnitude of the effect of $T$ and $Y$
+(in [Equation 2](#eq-y) as $b$). Below is a heatmap exploring the
+relationship between these three quantities when $n = 10,000$
+
+``` r
+params <- expand_grid(n = 10000, 
+                      p = seq(0.1, 0.5, by = 0.1), 
+                      a = seq(2, 10, by = 2), 
+                      b = seq(2, 10, by = 2))
+
+set.seed(1)
+B <- 1000
+bias_p <- map(1:B, ~ pmap(params, s))
 ```
 
-::: {.cell-output .cell-output-stdout}
-    # A tibble: 6 × 4
-          n    bias coverage fit                      
-      <dbl>   <dbl>    <dbl> <chr>                    
-    1   100  0.129         1 unadjusted               
-    2   100  0.106         1 propensity score weighted
-    3   100  0.0665        1 covariate adjustment     
-    4   500  0.0192        1 unadjusted               
-    5   500 -0.129         0 propensity score weighted
-    6   500 -0.0677        1 covariate adjustment     
-:::
+``` r
+d <- do.call(rbind, unlist(bias_p, recursive = FALSE)) %>%
+  filter(fit == "propensity score weighted") %>%
+  mutate(p = rep(params$p, B),
+         a = rep(params$a, B),
+         b = rep(params$b, B))
 
-::: cell-output-display
-![Figure 3: Boo. Look at all that bias and
-variance](README_files/figure-markdown/fig-sims-1.png){#fig-sims}
-:::
-:::
-
-[Figure 4](#fig-sims2) shows similar results for a coverage metric, with
-some undercoverage even observable in Panel A.
-
-::: cell
-``` {.r .cell-code}
-results2 <- results %>%
-  group_by(n, fit) %>%
-  summarise(mean_coverage = mean(coverage),
-            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+d %>%
+ group_by(a, b, p) %>%
+ summarise(bias = mean(bias), .groups = "drop") %>%
+ggplot(aes(x = a, y = b, fill = bias)) + 
+  geom_tile() + 
+  facet_grid(~p)
 ```
 
-::: {.cell-output .cell-output-stderr}
-    `summarise()` has grouped output by 'n'. You can override using the `.groups`
-    argument.
-:::
+<figure>
+<img src="README_files/figure-gfm/fig-heatmap-bias-1.png"
+id="fig-heatmap-bias"
+alt="Figure 4: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 4: Impact of the prevalence of X,
+magnitude of the effect between X and T, and magnitude of the effect
+between X and Y on the bias of the observed exposure
+effect.</figcaption>
+</figure>
 
-``` {.r .cell-code}
-results_ex2 <- results_ex %>%
-  group_by(n, fit) %>%
-  summarise(mean_coverage = mean(coverage),
-            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
+``` r
+d %>%
+ group_by(a, b, p) %>%
+ summarise(sd = sd(bias), .groups = "drop") %>%
+ggplot(aes(x = a, y = b, fill = sd)) + 
+  geom_tile() + 
+  facet_grid(~p)
 ```
 
-::: {.cell-output .cell-output-stderr}
-    `summarise()` has grouped output by 'n'. You can override using the `.groups`
-    argument.
-:::
+<figure>
+<img src="README_files/figure-gfm/fig-heatmap-sd-1.png"
+id="fig-heatmap-sd"
+alt="Figure 5: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 5: Impact of the prevalence of X,
+magnitude of the effect between X and T, and magnitude of the effect
+between X and Y on the variability in the observed exposure
+effect.</figcaption>
+</figure>
 
-``` {.r .cell-code}
-results_ou2 <- results_ou %>%
-  group_by(n, fit) %>%
-  summarise(mean_coverage = mean(coverage),
-            mcse = sqrt(mean_coverage*(1-mean_coverage) / B))
-```
+<div id="refs" class="references csl-bib-body hanging-indent">
 
-::: {.cell-output .cell-output-stderr}
-    `summarise()` has grouped output by 'n'. You can override using the `.groups`
-    argument.
-:::
+<div id="ref-austin2019assessing" class="csl-entry">
 
-``` {.r .cell-code}
-ggplot(results2, aes(n, mean_coverage, color = fit, group = fit)) +
-  geom_point(position = position_dodge(1000)) +
-  geom_line(position = position_dodge(1000)) +
-  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
-                    ymax = mean_coverage + 1.96*mcse), width = .1,
-                position = position_dodge(1000)) +
-  geom_hline(yintercept = 0.95, lty = 2) +
-  theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
-  theme(legend.position = "none") -> p4
+Austin, Peter C. 2019. “Assessing Covariate Balance When Using the
+Generalized Propensity Score with Quantitative or Continuous Exposures.”
+*Statistical Methods in Medical Research* 28 (5): 1365–77.
 
-ggplot(results_ex2, aes(n, mean_coverage, color = fit, group = fit)) +
-  geom_point(position = position_dodge(1000)) +
-  geom_line(position = position_dodge(1000)) +
-  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
-                    ymax = mean_coverage + 1.96*mcse), width = .1,
-                position = position_dodge(1000)) +
-  geom_hline(yintercept = 0.95, lty = 2) +
-  theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
-  theme(legend.position = "none") -> p5
+</div>
 
-ggplot(results_ou2, aes(n, mean_coverage, color = fit, group = fit)) +
-  geom_point(position = position_dodge(1000)) +
-  geom_line(position = position_dodge(1000)) +
-  geom_errorbar(aes(ymin = mean_coverage - 1.96*mcse,
-                    ymax = mean_coverage + 1.96*mcse), width = .1,
-                position = position_dodge(1000)) +
-  geom_hline(yintercept = 0.95, lty = 2) +
-  theme_classic() +
-  scale_color_manual(values = c("orange", "cornflower blue", "pink")) + 
-  theme(legend.position = "none") -> p6
+<div id="ref-imbens2000role" class="csl-entry">
 
-p4 / p5 / p6 + plot_annotation(tag_levels = "A")
-```
+Imbens, Guido W. 2000. “The Role of the Propensity Score in Estimating
+Dose-Response Functions.” *Biometrika* 87 (3): 706–10.
 
-::: {.cell-output .cell-output-stderr}
-    Warning: `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-:::
+</div>
 
-::: cell-output-display
-![Figure 4: The coverage ain't
-coveraging](README_files/figure-markdown/fig-sims2-1.png){#fig-sims2}
-:::
-:::
+<div id="ref-imbens2015causal" class="csl-entry">
+
+Imbens, Guido W, and Donald B Rubin. 2015. *Causal Inference in
+Statistics, Social, and Biomedical Sciences*. Cambridge University
+Press.
+
+</div>
+
+<div id="ref-petersen2012diagnosing" class="csl-entry">
+
+Petersen, Maya L, Kristin E Porter, Susan Gruber, Yue Wang, and Mark J
+Van Der Laan. 2012. “Diagnosing and Responding to Violations in the
+Positivity Assumption.” *Statistical Methods in Medical Research* 21
+(1): 31–54.
+
+</div>
+
+</div>
+
