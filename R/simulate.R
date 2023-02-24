@@ -17,7 +17,7 @@ params <- function() {
       .a = c(1, 2, 3, 4, 10),
       .b = 1,
       .p = seq(0.1, 0.5, by = 0.1),
-      .id = 1:100
+      .id = 1:1000
     )
   ) |>
     distinct()
