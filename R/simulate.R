@@ -14,7 +14,7 @@ params <- function() {
     ),
     expand_grid(
       .n = 10000,
-      .a = seq(2, 10, by = 2),
+      .a = c(1, 2, 3, 4, 10),
       .b = 1,
       .p = seq(0.1, 0.5, by = 0.1),
       .id = 1:100

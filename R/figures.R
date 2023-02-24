@@ -110,93 +110,12 @@ plot_figure_sims <- function(.df) {
   p1 / p2 / p3 + plot_annotation(tag_levels = "A")
 }
 
-plot_figure_coverage <- function(.df) {
-  results <- .df |>
-    filter(a == 1, b == 1, p == .5)
-
-  results_ex <- .df |>
-    filter(a == 10, b == 1, p == .5)
-
-  results_ou <- .df |>
-    filter(a == 10, b == 10, p == .5)
-
-  results2 <- results %>%
-    group_by(n, fit) %>%
-    summarise(
-      mean_coverage = mean(coverage),
-      mcse = sqrt(mean_coverage * (1 - mean_coverage) / max(id))
-    )
-
-  results_ex2 <- results_ex %>%
-    group_by(n, fit) %>%
-    summarise(
-      mean_coverage = mean(coverage),
-      mcse = sqrt(mean_coverage * (1 - mean_coverage) / max(id))
-    )
-
-  results_ou2 <- results_ou %>%
-    group_by(n, fit) %>%
-    summarise(
-      mean_coverage = mean(coverage),
-      mcse = sqrt(mean_coverage * (1 - mean_coverage) / max(id))
-    )
-
-  ggplot(results2, aes(n, mean_coverage, color = fit, group = fit)) +
-    geom_point(position = position_dodge(1000)) +
-    geom_line(position = position_dodge(1000)) +
-    geom_errorbar(
-      aes(
-        ymin = mean_coverage - 1.96 * mcse,
-        ymax = mean_coverage + 1.96 * mcse
-      ),
-      width = .1,
-      position = position_dodge(1000)
-    ) +
-    geom_hline(yintercept = 0.95, lty = 2) +
-    theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
-    theme(legend.position = "none") -> p4
-
-  ggplot(results_ex2, aes(n, mean_coverage, color = fit, group = fit)) +
-    geom_point(position = position_dodge(1000)) +
-    geom_line(position = position_dodge(1000)) +
-    geom_errorbar(
-      aes(
-        ymin = mean_coverage - 1.96 * mcse,
-        ymax = mean_coverage + 1.96 * mcse
-      ),
-      width = .1,
-      position = position_dodge(1000)
-    ) +
-    geom_hline(yintercept = 0.95, lty = 2) +
-    theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
-    theme(legend.position = "none") -> p5
-
-  ggplot(results_ou2, aes(n, mean_coverage, color = fit, group = fit)) +
-    geom_point(position = position_dodge(1000)) +
-    geom_line(position = position_dodge(1000)) +
-    geom_errorbar(
-      aes(
-        ymin = mean_coverage - 1.96 * mcse,
-        ymax = mean_coverage + 1.96 * mcse
-      ),
-      width = .1,
-      position = position_dodge(1000)
-    ) +
-    geom_hline(yintercept = 0.95, lty = 2) +
-    theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
-    theme(legend.position = "none") -> p6
-
-  p4 / p5 / p6 + plot_annotation(tag_levels = "A")
-}
 
 plot_figure_bias <- function(.df) {
   .df |>
     filter(
       fit == "propensity score weighted (ATE)",
-      a %in% seq(2, 10, by = 2), b == 1,
+      a %in% c(1, 2, 3, 4, 10), b == 1,
       p %in% seq(0.1, 0.5, by = 0.1),
       n == 10000
     ) |>

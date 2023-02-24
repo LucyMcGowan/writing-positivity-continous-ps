@@ -30,18 +30,21 @@ exists a non-zero probability of receiving every exposure level.
 
 A generalized propensity score is defined as:
 
-$$e(t, x) = P(T = t | X = x)$$ Often, for continuous exposures this is
-estimated by first fitting a linear regression model prediction the
-exposure from a set of pre-exposure covariates. We then use the fitted
-values and the model variance in a Gaussian probability density
-function. (Austin 2019)
+$$e(t, x) = P(T = t | X = x)$$
+
+Often, for continuous exposures this is estimated by first fitting a
+linear regression model prediction the exposure from a set of
+pre-exposure covariates. We then use the fitted values and the model
+variance in a Gaussian probability density function. (Austin 2019)
 
 $$e(t, x) = f_{T|X}(t|x) = \frac{1}{\sqrt{2\pi\hat\sigma^2}}\exp\left\{-\frac{(t-X\hat\beta)^2}{2\pi\hat\sigma^2}\right\}$$
+
 The following stabilized weight is then used, where the numerator is the
 marginal density of the exposure.
 
 $$w = \frac{f_T(t)}{f_{T|X}(t|x)} = \frac{\hat{\sigma}_{t|x}}{\hat\sigma_t}\exp\left\{\frac{(t-X\hat\beta)^2}{2\hat\sigma_{t|x}^2}-\frac{(t-\mu_t)^2}{2\hat\sigma_t^2}\right\}$$
-\## Positivity
+
+## Positivity
 
 Violations (or near violations) of the probabilistic assumption can
 increase both the bias and variance of causal effect estimates.
@@ -70,8 +73,10 @@ probability 0.5. The continuous exposure, $T$ is generated as follows:
 
 <span id="eq-t">$$
 T = aX + \varepsilon_{t|x}
- \qquad(1)$$</span> Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such
-that the “true” effect of $T$ is 0:
+ \qquad(1)$$</span>
+
+Where $\varepsilon_{t|x}\sim N(0,1)$ and $Y$ such that the “true” effect
+of $T$ is 0:
 
 <span id="eq-y">$$
 Y = bX + \varepsilon_{y|x}
@@ -93,22 +98,22 @@ and a sample size of 10,000.
 
 <figure>
 <img src="README_files/figure-gfm/fig-a1-1.png" id="fig-a1"
-alt="Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n = 10,000" />
-<figcaption aria-hidden="true">Figure 1: Mirrored Histogram showing
+alt="Figure 1: Mirrored Histogram showing overlap. a = 1, b = 1, n = 10,000" />
+<figcaption aria-hidden="true">Figure 1: Mirrored Histogram showing
 overlap. a = 1, b = 1, n = 10,000</figcaption>
 </figure>
 
 <figure>
 <img src="README_files/figure-gfm/fig-a2-1.png" id="fig-a2"
-alt="Figure 2: Mirrored histogram with positivity near-violation" />
-<figcaption aria-hidden="true">Figure 2: Mirrored histogram with
+alt="Figure 2: Mirrored histogram with positivity near-violation" />
+<figcaption aria-hidden="true">Figure 2: Mirrored histogram with
 positivity near-violation</figcaption>
 </figure>
 
 <figure>
 <img src="README_files/figure-gfm/fig-weight-1.png" id="fig-weight"
-alt="Figure 3: oh no. Weighted pseudopopulation using GPS (ATE) weights" />
-<figcaption aria-hidden="true">Figure 3: oh no. Weighted
+alt="Figure 3: oh no. Weighted pseudopopulation using GPS (ATE) weights" />
+<figcaption aria-hidden="true">Figure 3: oh no. Weighted
 pseudopopulation using GPS (ATE) weights</figcaption>
 </figure>
 
@@ -117,8 +122,8 @@ distribution for the effect is non-normal ([Figure 4](#fig-skew)).
 
 <figure>
 <img src="README_files/figure-gfm/fig-skew-1.png" id="fig-skew"
-alt="Figure 4: Skewed distribution of the estimated coefficient for the treatment. For reference a normal density is overlaid in orange." />
-<figcaption aria-hidden="true">Figure 4: Skewed distribution of the
+alt="Figure 4: Skewed distribution of the estimated coefficient for the treatment. For reference a normal density is overlaid in orange." />
+<figcaption aria-hidden="true">Figure 4: Skewed distribution of the
 estimated coefficient for the treatment. For reference a normal density
 is overlaid in orange.</figcaption>
 </figure>
@@ -131,22 +136,9 @@ which does not appreciably decrease despite the large sample size.
 
 <figure>
 <img src="README_files/figure-gfm/fig-sims-1.png" id="fig-sims"
-alt="Figure 5: Boo. Look at all that bias and variance" />
-<figcaption aria-hidden="true">Figure 5: Boo. Look at all that bias and
+alt="Figure 5: Boo. Look at all that bias and variance" />
+<figcaption aria-hidden="true">Figure 5: Boo. Look at all that bias and
 variance</figcaption>
-</figure>
-
-[Figure 6](#fig-coverage) shows similar results for a coverage metric,
-with some undercoverage even observable in Panel A.
-
-    Warning: `position_dodge()` requires non-overlapping x intervals
-    `position_dodge()` requires non-overlapping x intervals
-
-<figure>
-<img src="README_files/figure-gfm/fig-coverage-1.png" id="fig-coverage"
-alt="Figure 6: The coverage ain’t coveraging" />
-<figcaption aria-hidden="true">Figure 6: The coverage ain’t
-coveraging</figcaption>
 </figure>
 
 The magnitude of the bias and variability depend on the magnitude of the
@@ -157,8 +149,8 @@ $n = 10,000$
 
 <figure>
 <img src="README_files/figure-gfm/fig-bias-1.png" id="fig-bias"
-alt="Figure 7: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect." />
-<figcaption aria-hidden="true">Figure 7: Impact of the prevalence of X,
+alt="Figure 6: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the bias of the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 6: Impact of the prevalence of X,
 magnitude of the effect between X and T, and magnitude of the effect
 between X and Y on the bias of the observed exposure
 effect.</figcaption>
@@ -166,8 +158,8 @@ effect.</figcaption>
 
 <figure>
 <img src="README_files/figure-gfm/fig-variance-1.png" id="fig-variance"
-alt="Figure 8: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect." />
-<figcaption aria-hidden="true">Figure 8: Impact of the prevalence of X,
+alt="Figure 7: Impact of the prevalence of X, magnitude of the effect between X and T, and magnitude of the effect between X and Y on the variability in the observed exposure effect." />
+<figcaption aria-hidden="true">Figure 7: Impact of the prevalence of X,
 magnitude of the effect between X and T, and magnitude of the effect
 between X and Y on the variability in the observed exposure
 effect.</figcaption>
