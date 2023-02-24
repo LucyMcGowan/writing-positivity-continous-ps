@@ -106,16 +106,6 @@ tar_read(fig_sims)
 ```
 
 
-@fig-coverage shows similar results for a coverage metric, with some undercoverage even observable in Panel A.
-
-```{r}
-#| label: fig-coverage
-#| fig-height: 10
-#| fig-cap: "The coverage ain't coveraging"
-#| echo: false
-tar_read(fig_coverage)
-```
-
 The magnitude of the bias and variability depend on the magnitude of the effect of $X$ and $T$ (in @eq-t as $a$), and, for a binary confounder the prevalence of the confounder ($p$). Below is a heatmap exploring the relationship between these two quantities when $n = 10,000$
 
 ```{r}

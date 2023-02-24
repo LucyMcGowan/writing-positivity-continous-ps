@@ -32,7 +32,6 @@ tar_plan(
   fig_weight = plot_figure_weight(data_path),
   fig_skew = plot_figure_skew(model_results),
   fig_sims = plot_figure_sims(model_results),
-  fig_coverage = plot_figure_coverage(model_results),
   fig_bias = plot_figure_bias(model_results),
   fig_variance = plot_figure_variance(model_results),
   tar_quarto(readme, "README.qmd")
