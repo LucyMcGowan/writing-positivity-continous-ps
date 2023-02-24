@@ -201,11 +201,10 @@ plot_figure_bias <- function(.df) {
       n == 10000
     ) |>
     mutate(a = factor(a)) |>
-    ggplot(aes(x = p, y = bias, color = a, group = a)) +
-    geom_jitter(height = 0, alpha = 0.5, color = "grey80") +
+    ggplot(aes(x = factor(p), y = bias, fill = a)) +
+    geom_boxplot(position = position_dodge(), outlier.colour = "grey90") +
     geom_hline(color = "grey70", yintercept = 0) +
-    geom_smooth() +
-    scale_color_okabe_ito() +
+    scale_fill_okabe_ito() +
     theme_classic()
 }
 
