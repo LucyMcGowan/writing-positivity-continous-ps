@@ -62,11 +62,27 @@ fit_models <- function(data_path, .n, .a, .b, .p, .id) {
 
   weight <- dnorm(.df$x, mean(.df$x), sd(.df$x)) / ps
 
-  # overlap <- map_dbl(x, f, denominator_model)^(-1) / ps
+  #.df$x_binned <- round(.df$x, 1)
+  .df$x_binned <- cut(.df$x, breaks = quantile(.df$x, seq(0, 1, by = 0.1)),
+                      include.lowest = TRUE)
+  ps_binned <- predict(
+    MASS::polr(x_binned ~ c, data = .df),
+    type = "p"
+  )
+
+  num_overlap <- 1 / map_dbl(array_tree(1/ps_binned, 1), sum)
+  denom_overlap <- 1 / ps_binned
+  wt_mat <- num_overlap / denom_overlap
+
+  ## TODO malcolm is there a prettier way to do this?
+  overlap_w <- rep(0, nrow(.df))
+  for (i in .df$x_binned) {
+     overlap_w[.df$x_binned == i] <- wt_mat[.df$x_binned == i, colnames(wt_mat) == i]
+   }
 
   unadjusted <- lm(y ~ x, data = .df)
   ate_w <- lm(y ~ x, weights = weight, data = .df)
-  # ato_w <- lm(y ~ x, weights = overlap_w)
+  ato_w <- lm(y ~ x, weights = overlap_w, data = .df)
   gform <- lm(y ~ x + c, data = .df)
   tibble(
     bias = c(
@@ -80,14 +96,6 @@ fit_models <- function(data_path, .n, .a, .b, .p, .id) {
       summary(ate_w)$coefficients[2, 2],
       # summary(ato_w)$coefficients[2, 2],
       summary(gform)$coefficients[2, 2]
-    ),
-    coverage = c(
-      1 * (confint(unadjusted)[2, 1] < 0 &
-        confint(unadjusted)[2, 2] > 0),
-      1 * (confint(ate_w)[2, 1] < 0 &
-        confint(ate_w)[2, 2] > 0),
-      1 * (confint(gform)[2, 1] < 0 &
-        confint(gform)[2, 2] > 0)
     ),
     fit = c(
       "unadjusted",
