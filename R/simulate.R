@@ -88,19 +88,19 @@ fit_models <- function(data_path, .n, .a, .b, .p, .id) {
     bias = c(
       coef(unadjusted)[2],
       coef(ate_w)[2],
-      # coef(ato_w)[2],
+      coef(ato_w)[2],
       coef(gform)[2]
     ),
     variance = c(
       summary(unadjusted)$coefficients[2, 2],
       summary(ate_w)$coefficients[2, 2],
-      # summary(ato_w)$coefficients[2, 2],
+      summary(ato_w)$coefficients[2, 2],
       summary(gform)$coefficients[2, 2]
     ),
     fit = c(
       "unadjusted",
       "propensity score weighted (ATE)",
-      # "propensity score weighted (Overlap)",
+      "propensity score weighted (Overlap)",
       "covariate adjustment"
     ),
     n = unique(.df$n),
