@@ -1,10 +1,10 @@
 name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
-.Random.seed|object|1f7f9710fc0e818c|||||||||||||||
+.Random.seed|object|418a64ec2a5a8b93|||||||||||||||
 data_path|stem|d335e770e02d7397|307c1f3adee14779|7949dac79dae96e2|1349504789|data/|t19377.6654305164s|4e7818a2d57934b5|736|file|local|vector|||172.777||
 fig_a1|stem|7125434638e099e4|749727968935a2c0|b91b044a8dc15be7|1420104798||t19414.9060157918s|ef77ea45f4fb7d58|243551|rds|local|vector|||1.253||
 fig_a2|stem|e549ca068071e132|e5a8a31c599a5f81|26495778d258511a|1658106045||t19414.9060263516s|6ccc31fb76ef2577|243771|rds|local|vector|||0.397||
 fig_bias|stem|129d9ffa0a8f891e|f19c902578714266|f55c1f77b41fa3e7|-1557575421||t19419.7650057105s|0e2e38bb4aae7ee6|2343152|rds|local|vector|||0.019||
-fig_sims|stem|bfa687058237feab|9d9a9b2ed607c8ea|53cc20ab4713c099|-828296576||t19419.7650092798s|d69c687ed0ba5da3|3217214|rds|local|vector|||0.041||
+fig_sims|stem|396bd992a4da9b8f|9d9a9b2ed607c8ea|8825172e2da78948|-828296576||t19419.8260952729s|01bdd3551382ac41|3210236|rds|local|vector|||0.068||
 fig_skew|stem|be550e6145525cf2|9727fdd4e349278c|cc7f3c01f0edbd60|-634376585||t19419.7650098626s|6ed69facde08e5ba|148455|rds|local|vector|||0.021||
 fig_variance|stem|83a2f094f5bf3c2a|83eb7673df5d6c2a|c07244cbeacc0dfb|1537984174||t19419.7650024605s|a2883b18a57722b2|1937247|rds|local|vector|||0.058||
 fig_weight|stem|b2167bcc45c71eed|928cb46276ac2e8b|c135a7966ae7c455|-1750570221||t19414.9060503297s|79ec6b5f371132b7|804641|rds|local|vector|||1.106||
@@ -21,11 +21,11 @@ plot_figure_a1|function|94425237e1566bf7|||||||||||||||
 plot_figure_a2|function|206715f3bf0db89e|||||||||||||||
 plot_figure_bias|function|e3384e5755097ee3|||||||||||||||
 plot_figure_coverage|function|651184673abcc96b|||||||||||||||
-plot_figure_sims|function|b83a69387e4c15b3|||||||||||||||
+plot_figure_sims|function|22c3c41486a04108|||||||||||||||
 plot_figure_skew|function|7eb1dc56c93988e2|||||||||||||||
 plot_figure_variance|function|4eee358b876736e3|||||||||||||||
 plot_figure_weight|function|8e2b54ffae35e963|||||||||||||||
-readme|stem|230297b02fcc471f|f6cf73940b8ae624|232b78c3dc85d2b4|-165896733|README_files*README.md*README.qmd|t19419.7650786544s|fb983e166771f565|1142808|file|local|vector|||5.919||
+readme|stem|8697be6dcf5dd96c|f6cf73940b8ae624|316ab68e63f402e7|-165896733|README_files*README.md*README.qmd|t19419.8261489757s|b66985ff193ef311|1117322|file|local|vector|||4.469||
 simulate_arrow_dataset|function|3d53adfabf45c67f|||||||||||||||
 simulate_data|function|c8987e81fca8d2b0|||||||||||||||
 sum_ps|function|bc5a06f88828ba5e|||||||||||||||

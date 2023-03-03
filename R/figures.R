@@ -82,7 +82,7 @@ plot_figure_sims <- function(.df) {
 
   ggplot(results, aes(n, bias, color = fit, group = fit)) +
     geom_point(alpha = 0.1) +
-    geom_smooth() +
+  #  geom_smooth() +
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
@@ -91,7 +91,7 @@ plot_figure_sims <- function(.df) {
 
   ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
     geom_point(alpha = 0.1) +
-    geom_smooth() +
+  #  geom_smooth() +
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
@@ -100,7 +100,7 @@ plot_figure_sims <- function(.df) {
 
   ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
     geom_point(alpha = 0.1) +
-    geom_smooth() +
+  #  geom_smooth() +
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
