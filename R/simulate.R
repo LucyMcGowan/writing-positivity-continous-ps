@@ -65,36 +65,60 @@ fit_models <- function(data_path, .n, .a, .b, .p, .id) {
   #.df$x_binned <- round(.df$x, 1)
   .df$x_binned <- cut(.df$x, breaks = quantile(.df$x, seq(0, 1, by = 0.1)),
                       include.lowest = TRUE)
-  ps_binned <- predict(
-    MASS::polr(x_binned ~ c, data = .df),
-    type = "p"
-  )
 
-  num_overlap <- 1 / map_dbl(array_tree(1/ps_binned, 1), sum)
-  denom_overlap <- 1 / ps_binned
-  wt_mat <- num_overlap / denom_overlap
 
-  ## TODO malcolm is there a prettier way to do this?
-  overlap_w <- rep(0, nrow(.df))
-  for (i in .df$x_binned) {
-     overlap_w[.df$x_binned == i] <- wt_mat[.df$x_binned == i, colnames(wt_mat) == i]
-   }
+  tryCatch({
+    MASS::polr(x_binned ~ c, data = .df)
+  }, warning = function(w) {
+   # message("Model doesn't fit") # message to console
+    modelFail <<- TRUE
+  }, error = function(e) {
+   # message("error!")
+  }, finally = {
+  })
+
+  if(exists("modelFail")){
+    cat("DON'T PANIC! The model fit failed, moving on...")
+    coef_ato <- NA
+    var_ato <- NA
+
+  } else {
+    ps_binned <- suppressWarnings(predict(
+      MASS::polr(x_binned ~ c, data = .df),
+      type = "p"
+    ))
+
+    num_overlap <- 1 / map_dbl(array_tree(1/ps_binned, 1), sum)
+    denom_overlap <- 1 / ps_binned
+    wt_mat <- num_overlap / denom_overlap
+
+    ## TODO malcolm is there a prettier way to do this?
+    overlap_w <- rep(0, nrow(.df))
+    for (i in .df$x_binned) {
+      overlap_w[.df$x_binned == i] <- wt_mat[.df$x_binned == i, colnames(wt_mat) == i]
+
+    }
+    ato_w <- lm(y ~ x, weights = overlap_w, data = .df)
+    coef_ato <- coef(ato_w)[2]
+    var_ato <- summary(ato_w)$coefficients[2, 2]
+
+
+  }
 
   unadjusted <- lm(y ~ x, data = .df)
   ate_w <- lm(y ~ x, weights = weight, data = .df)
-  ato_w <- lm(y ~ x, weights = overlap_w, data = .df)
   gform <- lm(y ~ x + c, data = .df)
   tibble(
     bias = c(
       coef(unadjusted)[2],
       coef(ate_w)[2],
-      coef(ato_w)[2],
+      coef_ato,
       coef(gform)[2]
     ),
     variance = c(
       summary(unadjusted)$coefficients[2, 2],
       summary(ate_w)$coefficients[2, 2],
-      summary(ato_w)$coefficients[2, 2],
+      var_ato,
       summary(gform)$coefficients[2, 2]
     ),
     fit = c(

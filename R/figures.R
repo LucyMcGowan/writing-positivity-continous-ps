@@ -86,7 +86,7 @@ plot_figure_sims <- function(.df) {
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
+  #  scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
     theme(legend.position = "none") -> p1
 
   ggplot(results_ex, aes(n, bias, color = fit, group = fit)) +
@@ -95,7 +95,7 @@ plot_figure_sims <- function(.df) {
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
+  #  scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
     theme(legend.position = "none") -> p2
 
   ggplot(results_ou, aes(n, bias, color = fit, group = fit)) +
@@ -104,7 +104,7 @@ plot_figure_sims <- function(.df) {
     # geom_smooth(color = "white") +
     geom_hline(yintercept = 0, lty = 2) +
     theme_classic() +
-    scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
+  #  scale_color_manual(values = c("orange", "cornflower blue", "pink")) +
     theme(legend.position = "bottom") -> p3
 
   p1 / p2 / p3 + plot_annotation(tag_levels = "A")
