@@ -12,33 +12,48 @@ The discrete vs. continuous nature of an exposure of interest can require modest
 
 The assumptions for drawing causal inference from data are related to the *assignment mechanism*. There are three key assumptions: (1) the assignment is *individualistic*, that is, an individual's assignment probability cannot depend on the values of covariates or potential outcomes of other individuals; (2) the assignment is *unconfounded*, i.e., the assignment mechanism cannot depend on the potential outcomes; and (3) the assignment is *probabilistic*, such that there is a non-zero probability for each treatment value for every individual. [@imbens2015causal] This final assumption, sometimes referred to as *positivity*, has been shown to be a sensitivity point for methods in the discrete exposure setting, even when the assumption is known to hold but the number of individuals for certain exposure-covariate combinations is small [@peterson2012diagnosing ; @leger2022causal]. This paper explores how sensitive popular causal methods are to similar non-structural positivity violations in the continuous exposure setting.
 
-The structure of this paper is as follows. In Section 2, we define notation and both standard and generalized propensity scores. In Section 3, we define the primary methods of interest for comparison. In Section 4, these methods are compared under a variety of data generating mechanisms corresponding to varying strengths of non-structural positivity violations. Section 5 concludes with discussion and recommendations for practitioners.
+The structure of this paper is as follows. In Section 2, we define notation and both standard and generalized propensity scores. In Section 3, we define the primary methods of interest and compare them under a variety of data generating mechanisms corresponding to varying strengths of non-structural positivity violations. In Section 4, we apply the methods to a real data application where positivity is questionable. Section 5 concludes with discussion and recommendations for practitioners.
 
 ## Notation and propensity scores
 
-Denote the continuous exposure as $T$, which takes on values in a set $\mathscr{T}$. For individual $i$ and each value of the exposure, $t$, there is a potential outcome $Y_i(t)$. [@imbens2000role] Each individual also has a vector of pre-exposure covariates, $X_i$. In the most general case, the assignment mechanism is defined as $P(T=t|\mathbf{X}, \mathbf{Y}(t))$ (with the unconfounded assumption this reduced to $P(T=t|\mathbf{X})$. An assignment mechanism is *probabilisitic* if the probability of assignment to each exposure level is strictly between 0 and 1:
+Denote the continuous exposure as $T$, which takes on values in a set $\mathscr{T}$. For individual $i$ and each value of the exposure, $t$, there is a potential outcome $Y_i(t)$. [@imbens2000role] Each individual also has a vector of pre-exposure covariates, $X_i$. In the most general case, the assignment mechanism is defined as $P(T=t|\mathbf{X}, \mathbf{Y}(t))$; with the unconfounded assumption this reduces to $P(T=t|\mathbf{X})$. This definition of the assignment mechanism is commonly referred to as a propensity score. An assignment mechanism is *probabilisitic* if the probability of assignment to each exposure level is strictly between 0 and 1:
 
 $$0 < P_i(X, Y(t)) < 1, \textrm{ for each possible } X, Y(t)$$ 
 
-for all $i=1, \dots, N$
-In other words, the probabilistic (positivity) assumption states that for all individuals within strata of $X$ there exists a non-zero probability of receiving every exposure level. 
+for all $i=1, \dots, N$. In other words, the probabilistic (positivity) assumption states that for all individuals within strata of $X$ there exists a non-zero probability of receiving every exposure level.
 
-## GPS
+A generalized propensity score relaxes the idea of propensity scores to the continuous exposure setting and is defined as
+$$e(t, x) = f_{t|x}(T = t | X = x)$$
+Thus, the assignment mechanism is represented as a conditional density rather than as a probability. The positivity assumption is defined similarly, such that the conditional density of each exposure level must be greater than 0 for all possible confounder levels, i.e., $e(t, x) > 0$, for all $x$ where $f(X=x) > 0$.
 
-A generalized propensity score is defined as:
+Propensity scores have a balancing property such that blah. This allows them to be used to estimate causal effects in the presence of measured confounding. A variety of methods exist to leverage propensity scores for this purpose, including matching, weighting, conditional modeling, stratification, and doubly robust approaches (add citations). For the purposes of this paper, we will focus attention on the popular method of propensity score weighting, and the sentivity of this method to positivity violations.
 
-$$e(t, x) = P(T = t | X = x)$$
-Often, for continuous exposures this is estimated by first fitting a linear regression model prediction the exposure from a set of pre-exposure covariates. We then use the fitted values and the model variance in a Gaussian probability density function. [@austin2019assessing] 
+Violations (or near violations) of the positivity assumption can increase both the bias and variance of causal effect estimates. [@petersen2012diagnosing]. There are two ways this violation can arise: structural non-positivity and random non-positivity. The former suggests that there is a structural mechanism that makes certain levels of the exposure impossible for a subset of individuals. The latter are random violations that can occur in finite samples due to chance. For example, an assignment mechanism that is truly normally distributed would not yield a structural positivity violation (as the support of the exposure variable would be all real numbers across the set of possible confounder values), but it could very likely yield a random non-positivity violation as the conditional normal distribution may have sparse overlap for many levels of the confounder(s). This paper will focus on random violations of positivity, demonstrating that "finite" does not mean small, but rather in the case of continuous exposures can be any sample size that is not infinite.
+
+## Simulations
+
+The aim of this simulation study is to compare popular causal inference methods for continuous exposures under settings of random violations to the positivity assumption. First we define the estimand of interest.
+
+### Estimand
+
+Consider a marginal structural model (MSM) for the potential outcomes,
+$$ E\{Y(t)\} = f(\beta, t) $$
+
+where a finite constraint on $\beta$ places parametric restrictions on the model. For this simulation, we will consider a simple MSM, namely $E\{Y(t)\} = \beta_{0} + \beta_{1}t$. The estimand of interest is then the coefficient $\beta_{1}$, which summarizes the causal effect of $T$ on $Y$.
+
+### Methods
+
+Three methods will be considered in simulation studies. The primary method of interest is a propensity score weighted estimator. First one must estimate the propensity scores by fitting a model with the exposure variable as the model outcome, conditional on any assumed confounder variables (or generally, a set of baseline pre-exposure variables which includes potential confounders). In practice, a linear model assuming that the exposure is conditionally normally distributed is a common choice, although other methods are available. [@naimi2014constructing] We then use the fitted values and the model variance in a Gaussian probability density function. [@austin2019assessing] 
 
 $$e(t, x) = f_{T|X}(t|x) = \frac{1}{\sqrt{2\pi\hat\sigma^2}}\exp\left\{-\frac{(t-X\hat\beta)^2}{2\pi\hat\sigma^2}\right\}$$
 The following stabilized weight is then used, where the numerator is the marginal density of the exposure.
 
 $$w = \frac{f_T(t)}{f_{T|X}(t|x)} = \frac{\hat{\sigma}_{t|x}}{\hat\sigma_t}\exp\left\{\frac{(t-X\hat\beta)^2}{2\hat\sigma_{t|x}^2}-\frac{(t-\mu_t)^2}{2\hat\sigma_t^2}\right\}$$
-## Positivity
+Finally, a second model is fit, this time of the outcome $Y$ conditional on the exposure $T$, but where each observation is weighted by the corresponding stabilized weight $w$. Then the coefficient of the exposure in this fitted model provides an estimator of the causal effect of interest $\beta_{1}$.
 
-Violations (or near violations) of the probabilistic assumption can increase both the bias and variance of causal effect estimates. [@petersen2012diagnosing]. There are two ways this violation can arise: structural non-positivity and random non-positivity. The former suggests that there is a structural mechanism that makes certain levels of the exposure impossible for a subset of individuals. The latter are random violations that can occur in finite samples due to chance. This paper will focus on random violations of positivity, demonstrating that "finite" does not mean small, but rather in the case of continuous exposures can be any sample size that is not infinite.
+Two comparator methods will be considered, namely unadjusted and adjusted regression models. Unadjusted models will fit a model of outcome on exposure, without conditioning on any covariates. Adjusted models will fit a correctly specified model conditional on exposure and covariates. Note that such adjusted models are equivalent to the method of standardization over covariates, as long as there are no interaction terms between exposure and covariates. In each case, the coefficient of the exposures in the fitted models will act as comparison estimators for the causal effect of interest.
 
-## Simulations
+### Data generating mechanisms
 
 We examine 3 scenarios:
 
@@ -59,7 +74,9 @@ $$ {#eq-y}
 
 where $\varepsilon_{y|x}\sim N(0,1)$. We examine $a = 1, 10$ and $b=1,10$ for moderate and large effects, respectively. We vary the sample size from 100 to 1,000,000, examining 100 replicates of each.
 
-When $a = 1$, the positivity assumption is not violated, for example @fig-a1 shows a mirrored histogram for a simulation as specified above with a sample size of 10,000. When $a = 10$, however, we do see a near positivity violation, for all sample sizes. Here, because $T$ is continuous, the individuals at the population level *do* have a non-zero probability of receiving all other values of the exposure, however in practice it happens very infrequently. See @fig-a2, a mirrored histogram for a simulation where $a=10$ and a sample size of 10,000.
+### Results
+
+When $a = 1$, the positivity assumption is not violated; for example @fig-a1 shows a mirrored histogram for a simulation as specified above with a sample size of 10,000. When $a = 10$, however, we do see a near positivity violation, for all sample sizes. Here, because $T$ is continuous, the individuals at the population level *do* have a non-zero probability of receiving all other values of the exposure, however in practice it happens very infrequently. See @fig-a2, a mirrored histogram for a simulation where $a=10$ and a sample size of 10,000.
 
 ```{r}
 #| label: "fig-a1"
@@ -105,7 +122,6 @@ tar_read(fig_skew)
 tar_read(fig_sims)
 ```
 
-
 @fig-coverage shows similar results for a coverage metric, with some undercoverage even observable in Panel A.
 
 ```{r}
@@ -135,3 +151,10 @@ tar_read(fig_bias)
 tar_read(fig_variance)
 ```
 
+## Application
+
+Haven't discussed, but should be easy enough to find an application to flesh out these ideas? Could maybe use something classic like NHANES.
+
+## Discussion
+
+Add here.
